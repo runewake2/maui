@@ -43,6 +43,11 @@ namespace Microsoft.Maui.Handlers
 			base.ConnectHandler(platformView);
 		}
 
+		public static void MapBackground(IImageButtonHandler handler, IImageButton imageButton)
+		{
+			(handler.PlatformView as ShapeableImageView)?.UpdateBackground(imageButton);
+		}
+
 		public static void MapStrokeColor(IImageButtonHandler handler, IButtonStroke buttonStroke)
 		{
 			(handler.PlatformView as ShapeableImageView)?.UpdateStrokeColor(buttonStroke);

@@ -6,6 +6,13 @@ namespace Microsoft.Maui.Platform
 {
 	public static class ImageButtonExtensions
 	{
+		public static void UpdateBackground(this ShapeableImageView platformButton, IImageButton imageButton)
+		{
+			Paint? paint = imageButton.Background;
+
+			platformButton.Background = paint?.ToDrawable(platformButton.Context);
+		}
+
 		public static void UpdateStrokeColor(this ShapeableImageView platformButton, IButtonStroke buttonStroke)
 		{
 			if (buttonStroke.StrokeColor is Color stroke)
