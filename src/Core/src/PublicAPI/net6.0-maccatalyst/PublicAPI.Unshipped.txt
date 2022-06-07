@@ -4,3 +4,5 @@ override Microsoft.Maui.Platform.LayoutView.HitTest(CoreGraphics.CGPoint point, 
 override Microsoft.Maui.Platform.LayoutView.SetNeedsLayout() -> void
 override Microsoft.Maui.Platform.LayoutView.UserInteractionEnabled.get -> bool
 override Microsoft.Maui.Platform.LayoutView.UserInteractionEnabled.set -> void
+static Microsoft.Maui.Platform.SearchBarExtensions.UpdateBackground(this UIKit.UISearchBar! uiSearchBar, Microsoft.Maui.ISearchBar! searchBar) -> void
+static Microsoft.Maui.Platform.SearchBarExtensions.UpdateBackground(this UIKit.UISearchBar! uiSearchBar, Microsoft.Maui.ISearchBar! searchBar, UIKit.UIColor? defaultTintColor = null) -> void
