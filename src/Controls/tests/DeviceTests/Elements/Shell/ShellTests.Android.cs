@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Android.Views;
+using AndroidX.AppCompat.Widget;
 using AndroidX.DrawerLayout.Widget;
+using Google.Android.Material.AppBar;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Handlers.Compatibility;
 using Microsoft.Maui.Controls.Platform.Compatibility;
@@ -69,7 +71,7 @@ namespace Microsoft.Maui.DeviceTests
 			{
 				await Task.Delay(100);
 				var dl = GetDrawerLayout(handler);
-				var flyoutContainer = GetRecyclerView(handler);
+				var flyoutContainer = GetFlyoutMenuReyclerView(handler);
 
 				Assert.True(flyoutContainer.MeasuredWidth > 0);
 				Assert.True(flyoutContainer.MeasuredHeight > 0);
@@ -144,17 +146,84 @@ namespace Microsoft.Maui.DeviceTests
 				var dl = GetDrawerLayout(handler);
 				await OpenDrawerLayout(handler);
 
-				var flyoutContainer = GetRecyclerView(handler);
+				var flyoutContainer = GetFlyoutMenuReyclerView(handler);
 
 				Assert.True(flyoutContainer.MeasuredWidth > 0);
 				Assert.True(flyoutContainer.MeasuredHeight > 0);
 			});
 		}
 
+		[Fact]
+		public async Task FlyoutItemsRendererWhenFlyoutHeaderIsSet()
+		{
+			SetupBuilder();
+			VerticalStackLayout header = new VerticalStackLayout()
+			{
+				new Label() { Text = "Hello there"}
+			};
+
+			var shell = await CreateShellAsync(shell =>
+			{
+				shell.CurrentItem = new FlyoutItem() { Items = { new ContentPage() }, Title = "Flyout Item" };
+				shell.FlyoutHeader = header;
+			});
+
+			await CreateHandlerAndAddToWindow<ShellRenderer>(shell, async (handler) =>
+			{
+				await Task.Delay(100);
+				var dl = GetDrawerLayout(handler);
+				await OpenDrawerLayout(handler);
+
+				var flyoutContainer = GetFlyoutMenuReyclerView(handler);
+
+				Assert.True(flyoutContainer.MeasuredWidth > 0);
+				Assert.True(flyoutContainer.MeasuredHeight > 0);
+			});
+		}
+
+		[Fact]
+		public async Task FlyoutHeaderRendersCorrectSizeWithFlyoutContentSet()
+		{
+			SetupBuilder();
+			VerticalStackLayout header = new VerticalStackLayout()
+			{
+				new Label() { Text = "Flyout Header"}
+			};
+
+			var shell = await CreateShellAsync(shell =>
+			{
+				shell.CurrentItem = new FlyoutItem() { Items = { new ContentPage() }, Title = "Flyout Item" };
+				shell.FlyoutHeader = header;
+
+				shell.FlyoutContent = new VerticalStackLayout()
+				{
+					new Label(){ Text = "Flyout Content"}
+				};
+
+				shell.FlyoutFooter = new VerticalStackLayout()
+				{
+					new Label(){ Text = "Flyout Footer"}
+				};
+			});
+
+			await CreateHandlerAndAddToWindow<ShellRenderer>(shell, async (handler) =>
+			{
+				await Task.Delay(100);
+				var headerPlatformView = header.ToPlatform();
+				var appBar = headerPlatformView.GetParentOfType<AppBarLayout>();
+				Assert.Equal(appBar.MeasuredHeight, headerPlatformView.MeasuredHeight);
+			});
+		}
+
 		protected Task OpenDrawerLayout(ShellRenderer shellRenderer, TimeSpan? timeOut = null)
 		{
+			var hamburger =
+				GetPlatformToolbar((IPlatformViewHandler)shellRenderer).GetChildrenOfType<AppCompatImageButton>().FirstOrDefault() ??
+				throw new InvalidOperationException("Unable to find Drawer Button");
+
+			hamburger.PerformClick();
+
 			var drawerLayout = GetDrawerLayout(shellRenderer);
-			drawerLayout.Open();
 			timeOut = timeOut ?? TimeSpan.FromSeconds(2);
 			TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 			drawerLayout.DrawerOpened += OnDrawerOpened;
@@ -174,7 +243,7 @@ namespace Microsoft.Maui.DeviceTests
 			return shellContext.CurrentDrawerLayout;
 		}
 
-		RecyclerViewContainer GetRecyclerView(ShellRenderer shellRenderer)
+		RecyclerViewContainer GetFlyoutMenuReyclerView(ShellRenderer shellRenderer)
 		{
 			IShellContext shellContext = shellRenderer;
 			DrawerLayout dl = shellContext.CurrentDrawerLayout;

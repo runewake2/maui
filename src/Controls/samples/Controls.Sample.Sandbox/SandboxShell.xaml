@@ -1,0 +1,152 @@
+﻿<Shell
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="Maui.Controls.Sample.SandboxShell"
+    xmlns:local="clr-namespace:Maui.Controls.Sample"
+    FlyoutHeaderBehavior="CollapseOnScroll"
+    x:Name="shell">
+
+
+    <!--<Shell.FlyoutHeader>
+        <Image Margin="25,25,0,0" Source="dotnet_bot.png"></Image>
+    </Shell.FlyoutHeader>-->
+
+
+    <!--<Shell.FlyoutContent>
+        <CollectionView BindingContext="{x:Reference shell}"
+                        IsGrouped="True"
+                        ItemsSource="{Binding FlyoutItems}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Label Text="{Binding Title}"
+                           TextColor="Black"
+                           FontSize="Large" />
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Shell.FlyoutContent>-->
+
+    <Shell.FlyoutHeader>
+        <ScrollView>
+            <VerticalStackLayout Background="Purple" HeightRequest="200" VerticalOptions="Fill">
+                <Label Text="Header Content" VerticalOptions="Fill"></Label>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Shell.FlyoutHeader>
+    <Shell.FlyoutFooter>
+        <VerticalStackLayout Background="Green">
+            <Label Text="Footer Content"></Label>
+        </VerticalStackLayout>
+    </Shell.FlyoutFooter>
+    <Shell.FlyoutContent>
+        <Grid Background="Blue">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Label Text="Flyout Content Top"></Label>
+            <Label Grid.Row="1" Text="Flyout Content Bottom"></Label>
+        </Grid>
+    </Shell.FlyoutContent>
+
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+    <FlyoutItem Title="Flyout Item Title">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>
+    </FlyoutItem>
+
+</Shell>

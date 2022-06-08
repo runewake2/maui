@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using Android.Content;
 using Android.Graphics.Drawables;
+using Android.Hardware.Lights;
 using Android.Runtime;
 using Android.Util;
 using Android.Views;
@@ -31,6 +32,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 		IShellContext _shellContext;
 		bool _disposed;
 		HeaderContainer _headerView;
+		FrameLayout _headerFrameLayout;
 		ViewGroup _rootView;
 		Drawable _defaultBackgroundColor;
 		ImageView _bgImage;
@@ -38,7 +40,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 		AView _flyoutContentView;
 		ShellViewRenderer _contentView;
 		View _flyoutHeader;
-		ShellViewRenderer _footerView;
+		ContainerView _footerView;
 		int _actionBarHeight;
 		int _flyoutHeight;
 		int _flyoutWidth;
@@ -108,7 +110,31 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				OnFlyoutViewLayoutChanged();
 
 			if (View is ShellFlyoutLayout sfl)
-				sfl.LayoutChanging += OnFlyoutViewLayoutChanged;
+			{
+				// The purpose of this code is to load the flyout content after
+				// the details content is visible.
+				// Loading the Recycler View the first time is expensive
+				// so we want to delay loading to the latest possible point in time so
+				// it doesn't delay initial startup.
+				GenericGlobalLayoutListener ggll = null;
+				ggll = new GenericGlobalLayoutListener(InitialLoad);
+				sfl.ViewTreeObserver.AddOnGlobalLayoutListener(ggll);
+
+				void InitialLoad()
+				{
+					OnFlyoutViewLayoutChanged();
+
+					if (_flyoutContentView == null || ggll == null)
+						return;
+
+					var listener = ggll;
+					ggll = null;
+
+					// Once initial load has finished let's just attach to Layout Changing
+					sfl.ViewTreeObserver.RemoveOnGlobalLayoutListener(listener);
+					sfl.LayoutChanging += OnFlyoutViewLayoutChanged;
+				}
+			}
 		}
 
 		void OnFlyoutHeaderMeasureInvalidated(object sender, EventArgs e)
@@ -165,7 +191,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				return;
 
 			_rootView.AddView(_flyoutContentView, index);
-			UpdateContentLayout();
+			UpdateContentPadding();
 		}
 
 		AView CreateFlyoutContent(ViewGroup rootView)
@@ -175,7 +201,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			{
 				var oldContentView = _contentView;
 				_contentView = null;
-				oldContentView.TearDown();
+				oldContentView.View = null;
 			}
 
 			var content = ((IShellController)ShellContext.Shell).FlyoutContent;
@@ -211,7 +237,8 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				_headerView.LayoutChange -= OnHeaderViewLayoutChange;
 				var oldHeaderView = _headerView;
 				_headerView = null;
-				_appBar.RemoveView(oldHeaderView);
+				_appBar.RemoveView(_headerFrameLayout);
+				_headerFrameLayout.RemoveView(oldHeaderView);
 				oldHeaderView.Dispose();
 			}
 
@@ -222,24 +249,31 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 
 			_flyoutHeader = ((IShellController)_shellContext.Shell).FlyoutHeader;
 			if (_flyoutHeader != null)
+			{
 				_flyoutHeader.MeasureInvalidated += OnFlyoutHeaderMeasureInvalidated;
 
-			_headerView = new HeaderContainer(_shellContext.AndroidContext, _flyoutHeader, MauiContext)
-			{
-				MatchWidth = true
-			};
+				_headerFrameLayout ??= new FrameLayout(_rootView.Context);
 
-			_headerView.LayoutChange += OnHeaderViewLayoutChange;
+				_headerView = new HeaderContainer(_rootView.Context, _flyoutHeader, MauiContext)
+				{
+					MatchWidth = true
+				};
 
-			_headerView.SetMinimumHeight(_actionBarHeight);
-			_headerView.LayoutParameters = new AppBarLayout.LayoutParams(LP.MatchParent, LP.WrapContent)
-			{
-				ScrollFlags = AppBarLayout.LayoutParams.ScrollFlagScroll
-			};
-			_appBar.AddView(_headerView);
-			UpdateFlyoutHeaderBehavior();
+				_headerView.LayoutChange += OnHeaderViewLayoutChange;
 
-			UpdateContentLayout();
+				_headerView.SetMinimumHeight(_actionBarHeight);
+				_headerFrameLayout.LayoutParameters = new AppBarLayout.LayoutParams(LP.MatchParent, LP.WrapContent)
+				{
+					ScrollFlags = AppBarLayout.LayoutParams.ScrollFlagScroll
+				};
+
+				_headerFrameLayout.AddView(_headerView);
+				_appBar.AddView(_headerFrameLayout);
+
+				UpdateFlyoutHeaderBehavior();
+			}
+
+			UpdateContentPadding();
 		}
 
 		void OnHeaderViewLayoutChange(object sender, AView.LayoutChangeEventArgs e)
@@ -247,7 +281,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			// If the flyoutheader/footer have changed size then we need to 
 			// remeasure the flyout content
 			if (UpdateContentPadding())
-				UpdateContentLayout();
+				UpdateContentPadding();
 		}
 
 		protected virtual void UpdateFlyoutFooter()
@@ -255,9 +289,9 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			if (_footerView != null)
 			{
 				var oldFooterView = _footerView;
-				_rootView.RemoveView(_footerView.PlatformView);
+				_rootView.RemoveView(_footerView);
 				_footerView = null;
-				oldFooterView.TearDown();
+				oldFooterView.View = null;
 			}
 
 			var footer = ((IShellController)_shellContext.Shell).FlyoutFooter;
@@ -265,15 +299,20 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			if (footer == null)
 				return;
 
-			_footerView = new ShellViewRenderer(_shellContext.AndroidContext, footer, MauiContext);
+			_footerView = new ContainerView(_shellContext.AndroidContext, footer, MauiContext)
+			{
+				MatchWidth = true
+			};
 
-			_rootView.AddView(_footerView.PlatformView);
+			_rootView.AddView(_footerView);
 
-			if (_footerView.PlatformView.LayoutParameters is CoordinatorLayout.LayoutParams cl)
+			if (_footerView.LayoutParameters is CoordinatorLayout.LayoutParams cl)
+			{
 				cl.Gravity = (int)(GravityFlags.Bottom | GravityFlags.End);
+			}
 
 			UpdateFooterLayout();
-			UpdateContentLayout();
+			UpdateContentPadding();
 		}
 
 		void UpdateFooterLayout()
@@ -283,21 +322,10 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				return;
 			}
 
-			var footerSize =
-				_footerView?
-					.Measure(
-						MeasureSpecMode.Exactly.MakeMeasureSpec(_flyoutWidth),
-						MeasureSpecMode.Unspecified.MakeMeasureSpec(0),
-						null,
-						null);
-
-			if (_footerView?.View != null && footerSize.HasValue)
+			if (_footerView?.LayoutParameters is CoordinatorLayout.LayoutParams cl)
 			{
-				var width = _shellContext.AndroidContext.FromPixels(footerSize.Value.Width);
-				var height = _shellContext.AndroidContext.FromPixels(footerSize.Value.Height);
-
-				_footerView.View.Frame =
-					new Graphics.Rect(Graphics.Point.Zero, new Graphics.Size(width, height));
+				cl.Width = MeasureSpecMode.Exactly.MakeMeasureSpec(_flyoutWidth);
+				cl.Height = MeasureSpecMode.Unspecified.MakeMeasureSpec(0);
 			}
 		}
 
@@ -330,6 +358,12 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 					var bottomMargin = FooterView?.MeasuredHeight ?? 0;
 					bottomMargin += _headerView?.MeasuredHeight ?? 0;
 
+					// The header view total height also includes the _actionBarHeight
+					// The Flyout Content is already going to be offset by the _actionBarHeight amount
+					// so we don't need to add that to the bottom margin
+					if (bottomMargin > _actionBarHeight)
+						bottomMargin -= _actionBarHeight;
+
 					if (cl.BottomMargin != bottomMargin)
 					{
 						cl.BottomMargin = bottomMargin;
@@ -339,39 +373,6 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			}
 
 			return returnValue;
-		}
-
-		void UpdateContentLayout()
-		{
-			if (_contentView != null)
-			{
-				if (_contentView == null)
-					return;
-
-				UpdateContentPadding();
-
-				var height =
-					(View.MeasuredHeight) -
-					(FooterView?.MeasuredHeight ?? 0) -
-					(_headerView?.MeasuredHeight ?? 0);
-
-				var width = View.MeasuredWidth;
-
-				var frameSize = _contentView.Measure(
-					MeasureSpecMode.Exactly.MakeMeasureSpec(width),
-					MeasureSpecMode.Exactly.MakeMeasureSpec(height), null, null);
-
-				var dpWidth = _shellContext.AndroidContext.FromPixels(frameSize.Width);
-				var dpHeight = _shellContext.AndroidContext.FromPixels(frameSize.Height);
-
-				_contentView.View.Frame = new Graphics.Rect(0, 0, dpWidth, dpHeight);
-			}
-			else if (_flyoutContentView != null)
-			{
-				// For scrollable content we need to use padding instead of margin
-				// if you use margin the recycler view won't render.			
-				UpdateContentPadding();
-			}
 		}
 
 		void OnFlyoutViewLayoutChanged()
@@ -397,7 +398,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				_flyoutWidth = View.MeasuredWidth;
 
 				UpdateFooterLayout();
-				UpdateContentLayout();
+				UpdateContentPadding();
 			}
 		}
 
@@ -483,57 +484,61 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 
 		protected virtual void UpdateFlyoutHeaderBehavior()
 		{
+			if (_headerView == null)
+				return;
+
 			var context = _shellContext.AndroidContext;
 
 			var margin = _flyoutHeader?.Margin ?? default(Thickness);
 
 			var minimumHeight = Convert.ToInt32(_actionBarHeight + context.ToPixels(margin.Top) - context.ToPixels(margin.Bottom));
 			_headerView.SetMinimumHeight(minimumHeight);
+			_headerFrameLayout.SetMinimumHeight(minimumHeight);
 
 			switch (_shellContext.Shell.FlyoutHeaderBehavior)
 			{
 				case FlyoutHeaderBehavior.Default:
 				case FlyoutHeaderBehavior.Fixed:
-					_headerView.LayoutParameters = new AppBarLayout.LayoutParams(LP.MatchParent, LP.WrapContent)
+					_headerFrameLayout.LayoutParameters = new AppBarLayout.LayoutParams(LP.MatchParent, LP.WrapContent)
 					{
-						ScrollFlags = 0,
-						LeftMargin = (int)context.ToPixels(margin.Left),
-						TopMargin = (int)context.ToPixels(margin.Top),
-						RightMargin = (int)context.ToPixels(margin.Right),
-						BottomMargin = (int)context.ToPixels(margin.Bottom)
+						ScrollFlags = 0
 					};
 					break;
 				case FlyoutHeaderBehavior.Scroll:
-					_headerView.LayoutParameters = new AppBarLayout.LayoutParams(LP.MatchParent, LP.WrapContent)
+					_headerFrameLayout.LayoutParameters = new AppBarLayout.LayoutParams(LP.MatchParent, LP.WrapContent)
 					{
-						ScrollFlags = AppBarLayout.LayoutParams.ScrollFlagScroll,
-						LeftMargin = (int)context.ToPixels(margin.Left),
-						TopMargin = (int)context.ToPixels(margin.Top),
-						RightMargin = (int)context.ToPixels(margin.Right),
-						BottomMargin = (int)context.ToPixels(margin.Bottom)
+						ScrollFlags = AppBarLayout.LayoutParams.ScrollFlagScroll
 					};
 					break;
 				case FlyoutHeaderBehavior.CollapseOnScroll:
-					_headerView.LayoutParameters = new AppBarLayout.LayoutParams(LP.MatchParent, LP.WrapContent)
+					_headerFrameLayout.LayoutParameters = new AppBarLayout.LayoutParams(LP.MatchParent, LP.WrapContent)
 					{
 						ScrollFlags = AppBarLayout.LayoutParams.ScrollFlagExitUntilCollapsed |
-							AppBarLayout.LayoutParams.ScrollFlagScroll,
-						LeftMargin = (int)context.ToPixels(margin.Left),
-						TopMargin = (int)context.ToPixels(margin.Top),
-						RightMargin = (int)context.ToPixels(margin.Right),
-						BottomMargin = (int)context.ToPixels(margin.Bottom)
+							AppBarLayout.LayoutParams.ScrollFlagScroll
 					};
 					break;
 			}
 		}
 
+		int lastOffset;
 		public void OnOffsetChanged(AppBarLayout appBarLayout, int verticalOffset)
 		{
+			if (lastOffset == verticalOffset)
+				return;
+
+			lastOffset = verticalOffset;
+
+			if (_headerView == null)
+				return;
+
 			var headerBehavior = _shellContext.Shell.FlyoutHeaderBehavior;
 			if (headerBehavior != FlyoutHeaderBehavior.CollapseOnScroll)
 				return;
 
-			_headerView.SetPadding(0, -verticalOffset, 0, 0);
+			_headerView.SetParentTopPadding(-verticalOffset);
+			_headerFrameLayout.SetPadding(0, -verticalOffset, 0, 0);
+			_headerView.MaybeRequestLayout();
+
 		}
 
 		protected override void Dispose(bool disposing)
@@ -553,11 +558,13 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				if (_appBar != null)
 				{
 					_appBar.RemoveOnOffsetChangedListener(this);
-					_appBar.RemoveView(_headerView);
+
+					if (_headerFrameLayout != null)
+						_appBar.RemoveView(_headerFrameLayout);
 				}
 
-				if (_rootView != null && _footerView?.PlatformView != null)
-					_rootView.RemoveView(_footerView.PlatformView);
+				if (_rootView != null && _footerView != null)
+					_rootView.RemoveView(_footerView);
 
 				if (View != null && View is ShellFlyoutLayout sfl)
 					sfl.LayoutChanging -= OnFlyoutViewLayoutChanged;
@@ -565,10 +572,15 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				if (_headerView != null)
 					_headerView.LayoutChange -= OnHeaderViewLayoutChange;
 
-				_contentView?.TearDown();
+				if (_contentView != null)
+					_contentView.View = null;
+
 				_flyoutContentView?.Dispose();
 				_headerView.Dispose();
-				_footerView?.TearDown();
+
+				if (_footerView != null)
+					_footerView.View = null;
+
 				_rootView.Dispose();
 				_defaultBackgroundColor?.Dispose();
 				_bgImage?.Dispose();
@@ -619,10 +631,8 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 
 			protected override void OnLayout(bool changed, int l, int t, int r, int b)
 			{
-				l -= PaddingLeft + PaddingRight;
-				t -= PaddingTop + PaddingBottom;
-
 				UpdateElevation();
+
 				base.OnLayout(changed, l, t, r, b);
 			}
 

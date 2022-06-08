@@ -93,25 +93,25 @@ namespace Microsoft.Maui.Platform
 
 			handler.SetMauiContext(context);
 
-			try
-			{
+			//try
+			//{
 				view.Handler = handler;
 
 				if (handler.VirtualView != view)
 					handler.SetVirtualView(view);
-			}
-			catch (ToPlatformException)
-			{
-				throw;
-			}
-			catch (HandlerNotFoundException)
-			{
-				throw;
-			}
-			catch (Exception exc)
-			{
-				throw new ToPlatformException($"{handler} found for {view} is incompatible", exc);
-			}
+			//}
+			//catch (ToPlatformException)
+			//{
+			//	throw;
+			//}
+			//catch (HandlerNotFoundException)
+			//{
+			//	throw;
+			//}
+			//catch (Exception exc)
+			//{
+			//	throw new ToPlatformException($"{handler} found for {view} is incompatible", exc);
+			//}
 
 			return handler;
 		}
