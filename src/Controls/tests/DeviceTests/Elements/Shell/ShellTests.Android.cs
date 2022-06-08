@@ -11,6 +11,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Handlers.Compatibility;
 using Microsoft.Maui.Controls.Platform.Compatibility;
 using Microsoft.Maui.Platform;
+using Microsoft.Maui.Controls.Platform;
 using Xunit;
 using AView = Android.Views.View;
 
@@ -144,7 +145,7 @@ namespace Microsoft.Maui.DeviceTests
 			{
 				await Task.Delay(100);
 				var dl = GetDrawerLayout(handler);
-				await OpenDrawerLayout(handler);
+				await OpenFlyout(handler);
 
 				var flyoutContainer = GetFlyoutMenuReyclerView(handler);
 
@@ -172,7 +173,7 @@ namespace Microsoft.Maui.DeviceTests
 			{
 				await Task.Delay(100);
 				var dl = GetDrawerLayout(handler);
-				await OpenDrawerLayout(handler);
+				await OpenFlyout(handler);
 
 				var flyoutContainer = GetFlyoutMenuReyclerView(handler);
 
@@ -215,20 +216,47 @@ namespace Microsoft.Maui.DeviceTests
 			});
 		}
 
-		protected Task OpenDrawerLayout(ShellRenderer shellRenderer, TimeSpan? timeOut = null)
+		protected AView GetFlyoutPlatformView(ShellRenderer shellRenderer)
 		{
+			var drawerLayout = GetDrawerLayout(shellRenderer);
+			return drawerLayout.GetChildrenOfType<ShellFlyoutLayout>().First();
+		}
+
+		internal Graphics.Rect GetFlyoutFrame(ShellRenderer shellRenderer)
+		{
+			var platformView = GetFlyoutPlatformView(shellRenderer);
+			var context = platformView.Context;
+
+			return new Graphics.Rect(0, 0,
+				context.FromPixels(platformView.MeasuredWidth),
+				context.FromPixels(platformView.MeasuredHeight));
+		}
+
+		internal Graphics.Rect GetFrameRelativeToFlyout(ShellRenderer shellRenderer, IView view)
+		{
+			var platformView = (view.Handler as IPlatformViewHandler).PlatformView;
+			return platformView.GetFrameRelativeTo(GetFlyoutPlatformView(shellRenderer));
+		}
+
+		protected async Task OpenFlyout(ShellRenderer shellRenderer, TimeSpan? timeOut = null)
+		{
+			var flyoutView = GetFlyoutPlatformView(shellRenderer);
+			var drawerLayout = GetDrawerLayout(shellRenderer);
+
+			if (!drawerLayout.FlyoutFirstDrawPassFinished)
+				await Task.Delay(10);
+
 			var hamburger =
 				GetPlatformToolbar((IPlatformViewHandler)shellRenderer).GetChildrenOfType<AppCompatImageButton>().FirstOrDefault() ??
 				throw new InvalidOperationException("Unable to find Drawer Button");
 
-			hamburger.PerformClick();
-
-			var drawerLayout = GetDrawerLayout(shellRenderer);
 			timeOut = timeOut ?? TimeSpan.FromSeconds(2);
+
 			TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 			drawerLayout.DrawerOpened += OnDrawerOpened;
+			hamburger.PerformClick();
 
-			return taskCompletionSource.Task.WaitAsync(timeOut.Value);
+			await taskCompletionSource.Task.WaitAsync(timeOut.Value);
 
 			void OnDrawerOpened(object sender, DrawerLayout.DrawerOpenedEventArgs e)
 			{
@@ -237,10 +265,10 @@ namespace Microsoft.Maui.DeviceTests
 			}
 		}
 
-		DrawerLayout GetDrawerLayout(ShellRenderer shellRenderer)
+		ShellFlyoutRenderer GetDrawerLayout(ShellRenderer shellRenderer)
 		{
 			IShellContext shellContext = shellRenderer;
-			return shellContext.CurrentDrawerLayout;
+			return (ShellFlyoutRenderer)shellContext.CurrentDrawerLayout;
 		}
 
 		RecyclerViewContainer GetFlyoutMenuReyclerView(ShellRenderer shellRenderer)

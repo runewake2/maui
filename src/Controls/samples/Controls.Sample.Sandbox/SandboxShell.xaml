@@ -27,6 +27,18 @@
     </Shell.FlyoutContent>-->
 
     <Shell.FlyoutHeader>
+        <Label Text="Header Content"></Label>
+    </Shell.FlyoutHeader>
+    <Shell.FlyoutContent>
+        <VerticalStackLayout>
+            <Label Text="Flyout Content"></Label>
+        </VerticalStackLayout>
+    </Shell.FlyoutContent>
+    <Shell.FlyoutFooter>
+        <Label Text="Footer Content"></Label>
+    </Shell.FlyoutFooter>
+
+    <!--<Shell.FlyoutHeader>
         <ScrollView>
             <VerticalStackLayout Background="Purple" HeightRequest="200" VerticalOptions="Fill">
                 <Label Text="Header Content" VerticalOptions="Fill"></Label>
@@ -39,15 +51,10 @@
         </VerticalStackLayout>
     </Shell.FlyoutFooter>
     <Shell.FlyoutContent>
-        <Grid Background="Blue">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"></RowDefinition>
-                <RowDefinition Height="Auto"></RowDefinition>
-            </Grid.RowDefinitions>
-            <Label Text="Flyout Content Top"></Label>
-            <Label Grid.Row="1" Text="Flyout Content Bottom"></Label>
-        </Grid>
-    </Shell.FlyoutContent>
+        <VerticalStackLayout Background="Blue">
+            <Label Text="Flyout content"></Label>
+        </VerticalStackLayout>
+    </Shell.FlyoutContent>-->
 
     <FlyoutItem Title="Flyout Item Title">
         <ShellContent ContentTemplate="{DataTemplate local:MainPage}"></ShellContent>

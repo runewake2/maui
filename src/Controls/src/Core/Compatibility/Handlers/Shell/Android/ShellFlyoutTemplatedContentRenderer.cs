@@ -83,6 +83,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			_appBar.AddOnOffsetChangedListener(this);
 
 			_actionBarHeight = context.GetActionBarHeight();
+
 			UpdateFlyoutHeader();
 
 			var metrics = context.Resources.DisplayMetrics;
@@ -280,8 +281,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 		{
 			// If the flyoutheader/footer have changed size then we need to 
 			// remeasure the flyout content
-			if (UpdateContentPadding())
-				UpdateContentPadding();
+			UpdateContentPadding();
 		}
 
 		protected virtual void UpdateFlyoutFooter()
@@ -299,34 +299,40 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			if (footer == null)
 				return;
 
+			if (_flyoutWidth == 0)
+				return;
+
 			_footerView = new ContainerView(_shellContext.AndroidContext, footer, MauiContext)
 			{
 				MatchWidth = true
 			};
 
-			_rootView.AddView(_footerView);
-
-			if (_footerView.LayoutParameters is CoordinatorLayout.LayoutParams cl)
+			var footerViewLP = new CoordinatorLayout.LayoutParams(0, 0)
 			{
-				cl.Gravity = (int)(GravityFlags.Bottom | GravityFlags.End);
-			}
+				Gravity = (int)(GravityFlags.Bottom | GravityFlags.End)
+			};
 
-			UpdateFooterLayout();
+			UpdateFooterLayout(footerViewLP);
+			_rootView.AddView(_footerView, footerViewLP);
+
 			UpdateContentPadding();
 		}
 
 		void UpdateFooterLayout()
 		{
-			if (_flyoutWidth == 0)
+			if (_flyoutWidth == 0 || _footerView == null)
 			{
 				return;
 			}
 
 			if (_footerView?.LayoutParameters is CoordinatorLayout.LayoutParams cl)
-			{
-				cl.Width = MeasureSpecMode.Exactly.MakeMeasureSpec(_flyoutWidth);
-				cl.Height = MeasureSpecMode.Unspecified.MakeMeasureSpec(0);
-			}
+				UpdateFooterLayout(cl);
+		}
+
+		void UpdateFooterLayout(CoordinatorLayout.LayoutParams cl)
+		{
+			cl.Width = MeasureSpecMode.Exactly.MakeMeasureSpec(_flyoutWidth);
+			cl.Height = MeasureSpecMode.Unspecified.MakeMeasureSpec(0);
 		}
 
 		bool UpdateContentPadding()
@@ -396,6 +402,11 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			{
 				_flyoutHeight = View.MeasuredHeight;
 				_flyoutWidth = View.MeasuredWidth;
+
+
+				// We wait to instantiate the flyout footer until we know the WxH of the flyout container
+				if (_footerView == null)
+					UpdateFlyoutFooter();
 
 				UpdateFooterLayout();
 				UpdateContentPadding();
@@ -520,13 +531,13 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			}
 		}
 
-		int lastOffset;
+		int _lastAppbarLayoutOffset;
 		public void OnOffsetChanged(AppBarLayout appBarLayout, int verticalOffset)
 		{
-			if (lastOffset == verticalOffset)
+			if (_lastAppbarLayoutOffset == verticalOffset)
 				return;
 
-			lastOffset = verticalOffset;
+			_lastAppbarLayoutOffset = verticalOffset;
 
 			if (_headerView == null)
 				return;

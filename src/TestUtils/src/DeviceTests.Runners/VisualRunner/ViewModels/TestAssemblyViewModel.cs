@@ -21,7 +21,7 @@ namespace Microsoft.Maui.TestUtils.DeviceTests.Runners.VisualRunner
 		TestState _result;
 		TestState _resultFilter;
 		RunStatus _runStatus;
-		string? _searchQuery = "FlyoutHeaderRendersCorrectSizeWithFlyoutContentSet";
+		string? _searchQuery = "FlyoutHeaderContentAndFooterAllMeasureCorrectly";
 
 		string? _detailText;
 		string? _displayName;

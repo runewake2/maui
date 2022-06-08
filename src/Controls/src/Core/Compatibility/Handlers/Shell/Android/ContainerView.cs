@@ -98,7 +98,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			var height = heightMeasureSpec.GetSize();
 
 			var measureWidth = width > 0 ? MeasureSpecMode.Exactly.MakeMeasureSpec(width) : MeasureSpecMode.Unspecified.MakeMeasureSpec(0);
-			var measureHeight = height > 0 ? MeasureSpecMode.Exactly.MakeMeasureSpec(width) : MeasureSpecMode.Unspecified.MakeMeasureSpec(0);
+			var measureHeight = height > 0 ? MeasureSpecMode.Exactly.MakeMeasureSpec(height) : MeasureSpecMode.Unspecified.MakeMeasureSpec(0);
 
 			double? maxHeight = null;
 
@@ -124,11 +124,14 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				newHeight -= _parentTopPadding;
 				if (newHeight < this.MinimumHeight)
 					newHeight = this.MinimumHeight;
+			}
 
-				if (newHeight != size.Height)
-				{
-					size = _shellContentView.Measure(measureWidth, MeasureSpecMode.Exactly.MakeMeasureSpec((int)newHeight), null, (int?)maxHeight);
-				}
+			if (newHeight < this.MinimumHeight)
+				newHeight = this.MinimumHeight;
+
+			if (newHeight != size.Height)
+			{
+				size = _shellContentView.Measure(measureWidth, MeasureSpecMode.Exactly.MakeMeasureSpec((int)newHeight), null, (int?)maxHeight);
 			}
 
 			SetMeasuredDimension((int)size.Width, (int)size.Height);
